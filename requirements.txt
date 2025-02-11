@@ -1,1 +1,6 @@
 streamlit
+deep-translator 
+transformers 
+spacy 
+vaderSentiment 
+pyttsx3

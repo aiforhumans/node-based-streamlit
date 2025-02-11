@@ -1,38 +1,37 @@
-# main.py
-
 import streamlit as st
-from nodes.system_prompt_node import SystemPromptNode
-from nodes.user_info_node import UserInfoNode
-from nodes.sentiment_node import SentimentNode
+import os
+import importlib
+from nodes.base_node import BaseNode
+
+def load_nodes():
+    """Dynamically loads all node classes from the nodes directory."""
+    nodes = []
+    nodes_dir = "nodes"
+    
+    for file in os.listdir(nodes_dir):
+        if file.endswith("_node.py") and file != "base_node.py":
+            module_name = f"nodes.{file[:-3]}"  # Remove ".py" and create module path
+            module = importlib.import_module(module_name)
+            
+            for attr in dir(module):
+                obj = getattr(module, attr)
+                if isinstance(obj, type) and issubclass(obj, BaseNode) and obj is not BaseNode:
+                    nodes.append(obj())  # Instantiate node class
+    return nodes
 
 def main():
-    st.title("Node-Based Modular Components in Streamlit")
-    shared_data = {}
+    st.title("Modular Node-Based Streamlit App")
+    
+    shared_data = {}  # Dictionary to share data across nodes
 
-    system_node = SystemPromptNode()
-    user_node = UserInfoNode()
-    sentiment_node = SentimentNode()
+    nodes = load_nodes()  # Dynamically load all nodes
 
-    # System Prompt Node
-    with st.expander("System Prompt Node"):
-        system_node.set_inputs()
-        if st.button("Store System Prompt"):
-            system_node.process(shared_data)
-            system_node.display_result(shared_data)
-
-    # User Info Node
-    with st.expander("User Info Node"):
-        user_node.set_inputs()
-        if st.button("Store User Info"):
-            user_node.process(shared_data)
-            user_node.display_result(shared_data)
-
-    # Sentiment Node
-    with st.expander("Sentiment Node"):
-        sentiment_node.set_inputs()
-        if st.button("Run Sentiment Analysis"):
-            sentiment_node.process(shared_data)
-            sentiment_node.display_result(shared_data)
+    for node in nodes:
+        with st.expander(f"{node.title}"):
+            node.set_inputs()
+            if st.button(f"Run {node.title}"):
+                node.process(shared_data)
+                node.display_result(shared_data)
 
 if __name__ == "__main__":
     main()
